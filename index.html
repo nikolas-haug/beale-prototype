@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEALE Lite</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #0c1f2c;
+      color: #e0f7fa;
+      padding: 2em;
+    }
+    h1, h3 {
+      color: #a2d5f2;
+    }
+    canvas {
+      border: 1px solid #2c3e50;
+      display: block;
+      margin: 1em 0;
+      background: #08212c;
+    }
+    .output {
+      background: #092a3a;
+      border: 1px solid #145374;
+      padding: 1em;
+      max-width: 600px;
+      border-radius: 6px;
+    }
+    .log {
+      margin-top: 1em;
+      background: #0b2f3d;
+      padding: 1em;
+      border-radius: 6px;
+    }
+    ul {
+      list-style-type: square;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>BEALE Lite – Whale Song Interpreter</h1>
+  <input type="file" id="audioFile" accept="audio/*" />
+  <br/><br/>
+  <audio controls id="audio" style="width:100%"></audio>
+  <canvas id="visualizer" width="800" height="150"></canvas>
+  <div class="output">
+    <h3>Current Phrase:</h3>
+    <p id="phrase"></p>
+  </div>
+  <div class="log">
+    <h3>Phrase Log:</h3>
+    <ul id="logList"></ul>
+  </div>
+
+  <script>
+    const audioFile = document.getElementById('audioFile');
+    const audio = document.getElementById('audio');
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    const phraseOutput = document.getElementById('phrase');
+    const logList = document.getElementById('logList');
+
+    let audioCtx, source, analyser, dataArray;
+
+    const names = ["Narael", "Vorrin", "Selkai", "Drumeth", "Olaan", "Caelo", "Taruin", "Fenja", "Erelas"];
+    const locations = ["Raeth's Deep", "The Shattered Reef", "Olaan's Cry", "Caelo's Rise", "Narael's Fall", "The Black Shoal", "Driftwater", "Ghost Trench"];
+    const actions = ["his fluke low", "her call fading", "at dawn", "when the current turned", "as silence fell", "beneath the storm", "in mourning"];
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generatePhrase(peakFreq, avgVol, time) {
+      const name = pick(names);
+      const location = pick(locations);
+      const action = pick(actions);
+
+      const intensity = avgVol > 100 ? "with grief" : avgVol < 30 ? "with peace" : "with memory";
+      const pitchTag = peakFreq > 600 ? "high voice" : peakFreq < 200 ? "deep echo" : "steady tone";
+
+      return `${name}, at ${location}, ${action} (${pitchTag}, ${intensity}) [${Math.round(time)}s]`;
+    }
+
+    function updateVisualizer() {
+      requestAnimationFrame(updateVisualizer);
+      analyser.getByteFrequencyData(dataArray);
+
+      ctx.fillStyle = '#0c1f2c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const barWidth = (canvas.width / dataArray.length) * 2.5;
+      let barHeight;
+      let x = 0;
+      let peak = 0;
+      let total = 0;
+
+      for (let i = 0; i < dataArray.length; i++) {
+        barHeight = dataArray[i];
+        total += barHeight;
+        if (barHeight > dataArray[peak]) peak = i;
+
+        ctx.fillStyle = `rgb(0, ${barHeight + 50}, ${150 + barHeight / 2})`;
+        ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
+
+        x += barWidth + 1;
+      }
+
+      const avgVol = total / dataArray.length;
+      const freq = peak * (audioCtx.sampleRate / 2) / dataArray.length;
+      const currentTime = audio.currentTime;
+
+      if (currentTime - lastLoggedTime >= 4) {
+        const phrase = generatePhrase(freq, avgVol, currentTime);
+        phraseOutput.textContent = phrase;
+
+        const li = document.createElement('li');
+        li.textContent = phrase;
+        logList.appendChild(li);
+
+        lastLoggedTime = currentTime;
+      }
+    }
+
+    let lastLoggedTime = 0;
+
+    audioFile.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      audio.src = url;
+
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+
+        source = audioCtx.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+      }
+
+      audio.onplay = () => {
+        audioCtx.resume();
+        updateVisualizer();
+        lastLoggedTime = 0;
+      };
+    });
+  </script>
+</body>
+</html>
