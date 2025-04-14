@@ -1,0 +1,50 @@
+// Variables
+$background-color: #0c1f2c;
+$text-color: #e0f7fa;
+$heading-color: #a2d5f2;
+$border-color: #2c3e50;
+$canvas-bg: #08212c;
+$output-bg: #092a3a;
+$output-border: #145374;
+$log-bg: #0b2f3d;
+
+// Base styles
+body {
+  font-family: sans-serif;
+  background: $background-color;
+  color: $text-color;
+  padding: 2em;
+  margin: 0;
+}
+
+h1, h3 {
+  color: $heading-color;
+}
+
+canvas {
+  border: 1px solid $border-color;
+  display: block;
+  margin: 1em 0;
+  background: $canvas-bg;
+}
+
+.output {
+  background: $output-bg;
+  border: 1px solid $output-border;
+  padding: 1em;
+  max-width: 600px;
+  border-radius: 6px;
+}
+
+.log {
+  margin-top: 1em;
+  background: $log-bg;
+  padding: 1em;
+  border-radius: 6px;
+}
+
+ul {
+  list-style-type: square;
+  padding-left: 20px;
+  margin: 0;
+} 
