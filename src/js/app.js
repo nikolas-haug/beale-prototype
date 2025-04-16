@@ -4,10 +4,13 @@ import { LogManager } from './logManager.js';
 
 class BEALELite {
   constructor() {
+    console.log('Initializing BEALELite...');
+    
     // DOM Elements
     this.audioFile = document.getElementById('audioFile');
     this.audio = document.getElementById('audio');
     this.canvas = document.getElementById('visualizer');
+    this.spectrogramCanvas = document.getElementById('spectrogram');
     this.phraseOutput = document.getElementById('phrase');
     this.logList = document.getElementById('logList');
     this.emotionalistMode = document.getElementById('emotionalistMode');
@@ -17,8 +20,15 @@ class BEALELite {
     this.exportJson = document.getElementById('exportJson');
     this.clearLog = document.getElementById('clearLog');
 
+    console.log('DOM elements initialized:', {
+      audioFile: !!this.audioFile,
+      audio: !!this.audio,
+      canvas: !!this.canvas,
+      spectrogramCanvas: !!this.spectrogramCanvas
+    });
+
     // Initialize modules
-    this.audioProcessor = new AudioProcessor(this.canvas);
+    this.audioProcessor = new AudioProcessor(this.canvas, this.spectrogramCanvas);
     this.phraseGenerator = new PhraseGenerator();
     this.logManager = new LogManager(this.logList);
 
@@ -26,23 +36,36 @@ class BEALELite {
     this.currentMode = 'emotionalist';
     this.lastLoggedTime = 0;
     this.logInterval = 4; // seconds between logs
+    this.isAudioInitialized = false;
+    this.analyzedUnits = [];
 
     // Bind event handlers
     this.bindEvents();
   }
 
   bindEvents() {
+    console.log('Binding events...');
+    
     // Audio file selection
-    this.audioFile.addEventListener('change', (e) => this.handleFileSelect(e));
+    this.audioFile.addEventListener('change', async (e) => {
+      console.log('File selected, handling file select...');
+      await this.handleFileSelect(e);
+    });
 
     // Audio playback
     this.audio.addEventListener('play', () => {
-      this.audioProcessor.initialize(this.audio);
+      console.log('Audio playback started...');
+      if (!this.isAudioInitialized) {
+        console.log('Initializing audio processor...');
+        this.audioProcessor.initialize(this.audio);
+        this.isAudioInitialized = true;
+      }
       this.audioProcessor.start();
       this.lastLoggedTime = 0;
     });
 
     this.audio.addEventListener('pause', () => {
+      console.log('Audio paused, stopping audio processor...');
       this.audioProcessor.stop();
     });
 
@@ -60,12 +83,81 @@ class BEALELite {
     requestAnimationFrame(() => this.update());
   }
 
-  handleFileSelect(event) {
+  async handleFileSelect(event) {
+    console.log('Handling file select...');
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
-    const url = URL.createObjectURL(file);
-    this.audio.src = url;
+    console.log('File selected:', file.name);
+    
+    try {
+      // Show loading state
+      this.phraseOutput.textContent = 'Analyzing audio file';
+      this.phraseOutput.classList.add('loading-text');
+      
+      // Analyze the file before playing
+      const analysis = await this.audioProcessor.analyzeAudioFile(file);
+      this.analyzedUnits = analysis.units;
+      
+      // Remove loading state
+      this.phraseOutput.classList.remove('loading-text');
+      
+      console.log('Analysis results:', {
+        numberOfUnits: this.analyzedUnits.length,
+        duration: analysis.duration,
+        sampleRate: analysis.sampleRate
+      });
+
+      // Log detailed information about each unit
+      this.logManager.addPhrase(`Found ${this.analyzedUnits.length} distinct units in the audio file (${analysis.duration.toFixed(2)} seconds):`);
+      
+      this.analyzedUnits.forEach((unit, index) => {
+        const startTime = unit.startTime.toFixed(2);
+        const endTime = unit.endTime.toFixed(2);
+        const duration = unit.duration.toFixed(2);
+        const dominantFreq = unit.dominantFrequency.toFixed(0);
+        const avgIntensity = unit.averageIntensity.toFixed(1);
+        
+        const unitInfo = [
+          `Unit ${index + 1}:`,
+          `  Time: ${startTime}s to ${endTime}s (duration: ${duration}s)`,
+          `  Dominant Frequency: ${dominantFreq} Hz`,
+          `  Average Intensity: ${avgIntensity} dB`,
+          `  Peak Frequencies Range: ${Math.min(...unit.peakFrequencies).toFixed(0)}Hz - ${Math.max(...unit.peakFrequencies).toFixed(0)}Hz`
+        ].join('\n');
+        
+        this.logManager.addPhrase(unitInfo);
+      });
+
+      // Create object URL and set up audio
+      const url = URL.createObjectURL(file);
+      this.audio.src = url;
+      
+      // Reset audio initialization flag
+      this.isAudioInitialized = false;
+      
+      // Update status
+      this.phraseOutput.textContent = 'Analysis complete - Ready to play';
+      
+      // Remove existing unit view if present
+      const existingUnitView = document.getElementById('unit-view');
+      if (existingUnitView) {
+        existingUnitView.remove();
+      }
+
+      // Create and add new unit view
+      if (analysis.units && analysis.units.length > 0) {
+        const unitView = this.createUnitView(analysis.units);
+        document.querySelector('.container').appendChild(unitView);
+      }
+
+    } catch (error) {
+      console.error('Error analyzing file:', error);
+      this.phraseOutput.textContent = 'Error analyzing audio file';
+    }
   }
 
   setMode(mode) {
@@ -94,6 +186,216 @@ class BEALELite {
       this.phraseOutput.textContent = phrase;
       this.logManager.addPhrase(phrase);
       this.lastLoggedTime = currentTime;
+    }
+  }
+
+  createUnitView(units) {
+    const unitViewContainer = document.createElement('div');
+    unitViewContainer.id = 'unit-view';
+    unitViewContainer.style.cssText = `
+      margin-top: 20px;
+      padding: 20px;
+      background: var(--secondary-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    `;
+
+    const title = document.createElement('h2');
+    title.textContent = 'Detected Units';
+    title.style.marginBottom = '15px';
+    unitViewContainer.appendChild(title);
+
+    const unitsGrid = document.createElement('div');
+    unitsGrid.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    `;
+
+    units.forEach((unit, index) => {
+      const unitCard = document.createElement('div');
+      unitCard.className = 'unit-card';
+      unitCard.style.cssText = `
+        padding: 15px;
+        background: var(--primary-bg);
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+      `;
+
+      const unitTitle = document.createElement('h3');
+      unitTitle.textContent = `Unit ${index + 1}`;
+      unitTitle.style.marginBottom = '10px';
+
+      // Create mini spectrogram canvas
+      const spectrogramCanvas = document.createElement('canvas');
+      spectrogramCanvas.width = 280; // Adjust based on card width
+      spectrogramCanvas.height = 80;
+      spectrogramCanvas.style.cssText = `
+        width: 100%;
+        height: 80px;
+        background: #000;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      `;
+
+      // Draw the unit's spectrogram
+      this.drawUnitSpectrogram(spectrogramCanvas, unit);
+
+      const details = document.createElement('div');
+      details.innerHTML = `
+        <div style="margin-bottom: 8px;">
+          <strong>Time Range:</strong> ${unit.startTime.toFixed(2)}s - ${unit.endTime.toFixed(2)}s
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Duration:</strong> ${unit.duration.toFixed(2)}s
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Dominant Frequency:</strong> ${unit.dominantFrequency.toFixed(1)} Hz
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Average Intensity:</strong> ${unit.averageIntensity.toFixed(1)} dB
+        </div>
+      `;
+
+      // Add play button with progress indicator
+      const playButton = document.createElement('button');
+      playButton.textContent = 'Play Unit';
+      playButton.style.cssText = `
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+      `;
+
+      // Add progress bar
+      const progressBar = document.createElement('div');
+      progressBar.style.cssText = `
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 2px;
+        width: 0%;
+        background: rgba(255, 255, 255, 0.5);
+        transition: width 0.1s linear;
+      `;
+      playButton.appendChild(progressBar);
+
+      let isPlaying = false;
+      playButton.onclick = () => {
+        const audioElement = document.querySelector('audio');
+        if (audioElement) {
+          if (isPlaying) {
+            audioElement.pause();
+            playButton.textContent = 'Play Unit';
+            progressBar.style.width = '0%';
+            isPlaying = false;
+          } else {
+            audioElement.currentTime = unit.startTime;
+            audioElement.play();
+            playButton.textContent = 'Stop';
+            isPlaying = true;
+
+            // Update progress bar
+            const updateProgress = () => {
+              if (!isPlaying) return;
+              const progress = ((audioElement.currentTime - unit.startTime) / unit.duration) * 100;
+              progressBar.style.width = `${Math.min(100, progress)}%`;
+              
+              if (audioElement.currentTime < unit.startTime + unit.duration && isPlaying) {
+                requestAnimationFrame(updateProgress);
+              } else {
+                // Reset when finished
+                isPlaying = false;
+                playButton.textContent = 'Play Unit';
+                progressBar.style.width = '0%';
+              }
+            };
+            updateProgress();
+
+            // Stop after unit duration
+            setTimeout(() => {
+              if (isPlaying) {
+                audioElement.pause();
+                playButton.textContent = 'Play Unit';
+                progressBar.style.width = '0%';
+                isPlaying = false;
+              }
+            }, unit.duration * 1000);
+          }
+        }
+      };
+
+      unitCard.appendChild(unitTitle);
+      unitCard.appendChild(spectrogramCanvas);
+      unitCard.appendChild(details);
+      unitCard.appendChild(playButton);
+      unitsGrid.appendChild(unitCard);
+    });
+
+    unitViewContainer.appendChild(unitsGrid);
+    return unitViewContainer;
+  }
+
+  drawUnitSpectrogram(canvas, unit) {
+    const ctx = canvas.getContext('2d');
+    const slices = unit.spectrogramSlices;
+    
+    if (!slices || slices.length === 0) return;
+
+    const sliceWidth = canvas.width / slices.length;
+    const height = canvas.height;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Find min and max intensity values for normalization
+    let minIntensity = Infinity;
+    let maxIntensity = -Infinity;
+    slices.forEach(slice => {
+      slice.forEach(intensity => {
+        minIntensity = Math.min(minIntensity, intensity);
+        maxIntensity = Math.max(maxIntensity, intensity);
+      });
+    });
+
+    // Use default range if we don't have valid min/max
+    if (!isFinite(minIntensity)) minIntensity = -90;
+    if (!isFinite(maxIntensity)) maxIntensity = -30;
+
+    slices.forEach((slice, i) => {
+      const x = i * sliceWidth;
+      
+      // Draw each frequency bin in the slice
+      slice.forEach((intensity, j) => {
+        // Normalize intensity to 0-1 range
+        const normalizedIntensity = (intensity - minIntensity) / (maxIntensity - minIntensity);
+        const y = height * (j / slice.length);
+        const binHeight = height / slice.length;
+
+        // Use the same gradient as main spectrogram
+        const colorIndex = Math.floor(normalizedIntensity * 255);
+        const color = this.getSpectrogramColor(colorIndex);
+        ctx.fillStyle = color;
+        ctx.fillRect(x, height - y, sliceWidth, -binHeight);
+      });
+    });
+  }
+
+  getSpectrogramColor(index) {
+    // Create a gradient similar to the main spectrogram
+    if (index < 64) {
+      return `rgb(0, 0, ${Math.floor(index * 4)})`;
+    } else if (index < 128) {
+      return `rgb(0, ${Math.floor((index - 64) * 4)}, 255)`;
+    } else if (index < 192) {
+      return `rgb(${Math.floor((index - 128) * 4)}, 255, ${Math.floor(255 - (index - 128) * 4)})`;
+    } else {
+      return `rgb(255, ${Math.floor(255 - (index - 192) * 4)}, 0)`;
     }
   }
 }
