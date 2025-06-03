@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEALE Lite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-B-FU758u.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-PPcIDBdd.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>BEALE Lite – Whale Song Interpreter</h1>
+      <p>An experimental interface for interpreting whale song through poetic translation</p>
+    </header>
+
+    <div class="controls">
+      <div class="mode-selector">
+        <button id="emotionalistMode" class="active">Emotionalist Mode</button>
+        <button id="analystMode">Analyst Mode</button>
+      </div>
+
+      <div class="audio-controls">
+        <label class="file-upload">
+          <input type="file" id="audioFile" accept="audio/*" />
+          Choose Audio File
+        </label>
+        <audio controls id="audio"></audio>
+      </div>
+    </div>
+
+    <div class="visualizations">
+      <canvas id="visualizer"></canvas>
+      <canvas id="spectrogram"></canvas>
+    </div>
+
+    <div class="output">
+      <h3>Current Interpretation:</h3>
+      <p id="phrase"></p>
+    </div>
+
+    <div class="log">
+      <div class="log-header">
+        <h3>Interpretation Log</h3>
+        <div class="export-controls">
+          <button id="copyLog">Copy Log</button>
+          <button id="exportTxt">Export as TXT</button>
+          <button id="exportJson">Export as JSON</button>
+          <button id="clearLog">Clear Log</button>
+        </div>
+      </div>
+      <ul id="logList"></ul>
+    </div>
+  </div>
+
+</body>
+</html> 
