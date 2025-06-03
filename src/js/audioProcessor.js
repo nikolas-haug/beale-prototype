@@ -86,24 +86,24 @@ export class AudioProcessor {
       this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
     }
 
-    // Disconnect existing source if it exists
-    if (this.source) {
-      try {
-        this.source.disconnect();
-      } catch (e) {
-        console.log('No need to disconnect source');
+    // Only create a new source if the audio element has changed
+    if (!this.source || this.source.mediaElement !== audioElement) {
+      if (this.source) {
+        try {
+          this.source.disconnect();
+        } catch (e) {
+          console.log('No need to disconnect source');
+        }
       }
-    }
-
-    // Create and connect new source
-    try {
-      this.source = this.audioCtx.createMediaElementSource(audioElement);
-      this.source.connect(this.analyser);
-      this.analyser.connect(this.audioCtx.destination);
-    } catch (e) {
-      console.log('Error connecting audio source:', e);
-      if (e.name !== 'InvalidStateError') {
-        throw e;
+      try {
+        this.source = this.audioCtx.createMediaElementSource(audioElement);
+        this.source.connect(this.analyser);
+        this.analyser.connect(this.audioCtx.destination);
+      } catch (e) {
+        console.log('Error connecting audio source:', e);
+        if (e.name !== 'InvalidStateError') {
+          throw e;
+        }
       }
     }
   }

@@ -1,0 +1,28 @@
+{
+  "audioFiles": [
+    {
+      "id": "sample1",
+      "title": "Humpback Whale Song - Pacific Ocean",
+      "description": "A classic humpback whale song recorded in the Pacific Ocean",
+      "filename": "humpback_whale_sound_pdb.mp3",
+      "duration": "4.07",
+      "source": "TBD"
+    },
+    {
+        "id": "sample2",
+        "title": "Humpback Whale Song - Hawaii",
+        "description": "A humpback whale song recorded by the Jupiter team in Hawaii",
+        "filename": "humpback_hawaii_jupiter_1.mp3",
+        "duration": "2.47",
+        "source": "TBD"
+    },
+    {
+        "id": "sample3",
+        "title": "Humpback Whale Song - NOAA",
+        "description": "A humpback whale song, NOAA Sounds of the Sea Project",
+        "filename": "noaa_humpback_whale_1.mp3",
+        "duration": ".47",
+        "source": "TBD"
+    }
+  ]
+} 

@@ -1,6 +1,7 @@
 import { AudioProcessor } from './audioProcessor.js';
 import { PhraseGenerator } from './phraseGenerator.js';
 import { LogManager } from './logManager.js';
+import { AudioLibrary } from './audioLibrary.js';
 
 class BEALELite {
   constructor() {
@@ -19,6 +20,10 @@ class BEALELite {
     this.exportTxt = document.getElementById('exportTxt');
     this.exportJson = document.getElementById('exportJson');
     this.clearLog = document.getElementById('clearLog');
+    this.customPlayBtn = document.getElementById('customPlay');
+    this.playIcon = document.getElementById('playIcon');
+    this.pauseIcon = document.getElementById('pauseIcon');
+    this.audioStatus = document.getElementById('audioStatus');
 
     console.log('DOM elements initialized:', {
       audioFile: !!this.audioFile,
@@ -62,11 +67,15 @@ class BEALELite {
       }
       this.audioProcessor.start();
       this.lastLoggedTime = 0;
+      this.playIcon.style.display = 'none';
+      this.pauseIcon.style.display = '';
     });
 
     this.audio.addEventListener('pause', () => {
       console.log('Audio paused, stopping audio processor...');
       this.audioProcessor.stop();
+      this.playIcon.style.display = '';
+      this.pauseIcon.style.display = 'none';
     });
 
     // Mode selection
@@ -79,6 +88,17 @@ class BEALELite {
     this.exportJson.addEventListener('click', () => this.logManager.exportAsJson());
     this.clearLog.addEventListener('click', () => this.logManager.clearLog());
 
+    // Custom play/pause button logic
+    this.customPlayBtn.addEventListener('click', () => {
+      if (this.audio.src && !this.customPlayBtn.disabled) {
+        if (this.audio.paused) {
+          this.audio.play();
+        } else {
+          this.audio.pause();
+        }
+      }
+    });
+
     // Animation frame for phrase generation
     requestAnimationFrame(() => this.update());
   }
@@ -88,6 +108,7 @@ class BEALELite {
     const file = event.target.files[0];
     if (!file) {
       console.log('No file selected');
+      this.setAudioLoadedState(false);
       return;
     }
 
@@ -153,6 +174,8 @@ class BEALELite {
         const unitView = this.createUnitView(analysis.units);
         document.querySelector('.container').appendChild(unitView);
       }
+
+      this.setAudioLoadedState(true);
 
     } catch (error) {
       console.error('Error analyzing file:', error);
@@ -398,9 +421,53 @@ class BEALELite {
       return `rgb(255, ${Math.floor(255 - (index - 192) * 4)}, 0)`;
     }
   }
+
+  setAudioLoadedState(loaded) {
+    if (loaded) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.customPlayBtn.disabled = false;
+      this.playIcon.style.display = '';
+      this.pauseIcon.style.display = 'none';
+      this.audioStatus.textContent = '';
+    } else {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.customPlayBtn.disabled = true;
+      this.playIcon.style.display = '';
+      this.pauseIcon.style.display = 'none';
+      this.audioStatus.textContent = 'No audio loaded. Please select or upload a track.';
+    }
+  }
+
+  async analyzeLibraryAudio(libraryFile) {
+    // Fetch the audio file as a Blob and analyze it
+    try {
+      this.phraseOutput.textContent = 'Analyzing audio file';
+      this.phraseOutput.classList.add('loading-text');
+      const response = await fetch(`/public/audio/${libraryFile.filename}`);
+      const blob = await response.blob();
+      const file = new File([blob], libraryFile.filename, { type: blob.type });
+      await this.handleFileSelect({ target: { files: [file] } });
+    } catch (error) {
+      this.phraseOutput.textContent = 'Error analyzing audio file';
+      console.error('Error analyzing library audio:', error);
+    }
+  }
 }
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-  new BEALELite();
+  let bealeLiteInstance;
+  new AudioLibrary(
+    (libraryFile) => {
+      if (!bealeLiteInstance) return;
+      bealeLiteInstance.analyzeLibraryAudio(libraryFile);
+    },
+    (loaded = true) => {
+      if (!bealeLiteInstance) return;
+      bealeLiteInstance.setAudioLoadedState(loaded);
+    }
+  );
+  bealeLiteInstance = new BEALELite();
 }); 
