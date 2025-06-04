@@ -54,7 +54,7 @@ export class AudioLibrary {
   }
 
   loadAudioFile(filename) {
-    const audioPath = `/public/audio/${filename}`;
+    const audioPath = `audio/${filename}`;
     this.audioElement.src = audioPath;
     this.audioElement.load();
   }

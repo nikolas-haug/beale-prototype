@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BEALE Lite</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/index-B-FU758u.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-PPcIDBdd.css">
+  <script type="module" crossorigin src="/beale-prototype/assets/index-CenBCKew.js"></script>
+  <link rel="stylesheet" crossorigin href="/beale-prototype/assets/index-RyW6PHfC.css">
 </head>
 <body>
   <div class="container">
@@ -15,42 +15,60 @@
       <p>An experimental interface for interpreting whale song through poetic translation</p>
     </header>
 
-    <div class="controls">
-      <div class="mode-selector">
-        <button id="emotionalistMode" class="active">Emotionalist Mode</button>
-        <button id="analystMode">Analyst Mode</button>
-      </div>
-
-      <div class="audio-controls">
-        <label class="file-upload">
-          <input type="file" id="audioFile" accept="audio/*" />
-          Choose Audio File
-        </label>
-        <audio controls id="audio"></audio>
-      </div>
-    </div>
-
-    <div class="visualizations">
-      <canvas id="visualizer"></canvas>
-      <canvas id="spectrogram"></canvas>
-    </div>
-
-    <div class="output">
-      <h3>Current Interpretation:</h3>
-      <p id="phrase"></p>
-    </div>
-
-    <div class="log">
-      <div class="log-header">
-        <h3>Interpretation Log</h3>
-        <div class="export-controls">
-          <button id="copyLog">Copy Log</button>
-          <button id="exportTxt">Export as TXT</button>
-          <button id="exportJson">Export as JSON</button>
-          <button id="clearLog">Clear Log</button>
+    <div class="main-columns">
+      <div class="left-column">
+        <div class="mode-selector">
+          <button id="emotionalistMode" class="active">Emotionalist Mode</button>
+          <button id="analystMode">Analyst Mode</button>
+        </div>
+        <div class="custom-audio-interface">
+          <button id="customPlay" class="audio-btn" disabled>
+            <span id="playIcon">▶️</span>
+            <span id="pauseIcon" style="display:none;">⏸️</span>
+          </button>
+          <span id="audioStatus" class="audio-status">No audio loaded. Please select or upload a track.</span>
+        </div>
+        <audio id="audio" style="display:none;"></audio>
+        <div class="audio-controls">
+          <div class="audio-bank">
+            <label for="audioLibrary">Select from Library:</label>
+            <select id="audioLibrary">
+              <option value="">Choose a sample...</option>
+            </select>
+            <div id="audioDescription" class="audio-description"></div>
+            <button id="analyzeLibraryAudio" disabled>Analyze Audio</button>
+          </div>
+          <div class="file-upload-section">
+            <p>Or upload your own:</p>
+            <label class="file-upload">
+              <input type="file" id="audioFile" accept="audio/*" />
+              Choose Audio File
+            </label>
+          </div>
         </div>
       </div>
-      <ul id="logList"></ul>
+      <div class="right-column">
+        <div class="output">
+          <h3>Current Interpretation:</h3>
+          <p id="phrase"></p>
+        </div>
+        <div class="visualizations">
+          <canvas id="visualizer"></canvas>
+          <canvas id="spectrogram"></canvas>
+        </div>
+        <div class="log">
+          <div class="log-header">
+            <h3>Interpretation Log</h3>
+            <div class="export-controls">
+              <button id="copyLog">Copy Log</button>
+              <button id="exportTxt">Export as TXT</button>
+              <button id="exportJson">Export as JSON</button>
+              <button id="clearLog">Clear Log</button>
+            </div>
+          </div>
+          <ul id="logList"></ul>
+        </div>
+      </div>
     </div>
   </div>
 

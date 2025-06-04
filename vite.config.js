@@ -2,8 +2,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: 'src',
-  publicDir: 'public',
-  base: './',
+  publicDir: '../public',
+  base: '/beale-prototype/',
   build: {
     outDir: '../dist',
     emptyOutDir: true,

@@ -445,7 +445,7 @@ class BEALELite {
     try {
       this.phraseOutput.textContent = 'Analyzing audio file';
       this.phraseOutput.classList.add('loading-text');
-      const response = await fetch(`/public/audio/${libraryFile.filename}`);
+      const response = await fetch(`audio/${libraryFile.filename}`);
       const blob = await response.blob();
       const file = new File([blob], libraryFile.filename, { type: blob.type });
       await this.handleFileSelect({ target: { files: [file] } });
