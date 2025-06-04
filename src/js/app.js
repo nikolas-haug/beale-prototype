@@ -24,6 +24,11 @@ class BEALELite {
     this.playIcon = document.getElementById('playIcon');
     this.pauseIcon = document.getElementById('pauseIcon');
     this.audioStatus = document.getElementById('audioStatus');
+    this.audioProgressBar = document.getElementById('audioProgressBar');
+    this.audioProgress = document.getElementById('audioProgress');
+    this.audioCurrentTime = document.getElementById('audioCurrentTime');
+    this.audioDuration = document.getElementById('audioDuration');
+    this.customAudioInterface = document.querySelector('.custom-audio-interface');
 
     console.log('DOM elements initialized:', {
       audioFile: !!this.audioFile,
@@ -101,6 +106,22 @@ class BEALELite {
 
     // Animation frame for phrase generation
     requestAnimationFrame(() => this.update());
+
+    // Custom audio progress bar logic
+    this.audio.addEventListener('timeupdate', () => {
+      this.updateAudioProgress();
+    });
+    this.audio.addEventListener('loadedmetadata', () => {
+      this.updateAudioProgress();
+    });
+    this.audioProgressBar.addEventListener('click', (e) => {
+      const rect = this.audioProgressBar.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percent = x / rect.width;
+      if (!isNaN(this.audio.duration)) {
+        this.audio.currentTime = percent * this.audio.duration;
+      }
+    });
   }
 
   async handleFileSelect(event) {
@@ -430,6 +451,7 @@ class BEALELite {
       this.playIcon.style.display = '';
       this.pauseIcon.style.display = 'none';
       this.audioStatus.textContent = '';
+      this.customAudioInterface.classList.add('audio-loaded');
     } else {
       this.audio.pause();
       this.audio.currentTime = 0;
@@ -437,6 +459,7 @@ class BEALELite {
       this.playIcon.style.display = '';
       this.pauseIcon.style.display = 'none';
       this.audioStatus.textContent = 'No audio loaded. Please select or upload a track.';
+      this.customAudioInterface.classList.remove('audio-loaded');
     }
   }
 
@@ -453,6 +476,22 @@ class BEALELite {
       this.phraseOutput.textContent = 'Error analyzing audio file';
       console.error('Error analyzing library audio:', error);
     }
+  }
+
+  updateAudioProgress() {
+    const duration = this.audio.duration || 0;
+    const currentTime = this.audio.currentTime || 0;
+    const percent = duration ? (currentTime / duration) * 100 : 0;
+    this.audioProgress.style.width = percent + '%';
+    this.audioCurrentTime.textContent = this.formatTime(currentTime);
+    this.audioDuration.textContent = this.formatTime(duration);
+  }
+
+  formatTime(time) {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 }
 

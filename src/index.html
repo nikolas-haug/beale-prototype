@@ -25,6 +25,14 @@
             <span id="playIcon">▶️</span>
             <span id="pauseIcon" style="display:none;">⏸️</span>
           </button>
+          <div class="audio-progress-container">
+            <div id="audioProgressBar" class="audio-progress-bar">
+              <div id="audioProgress" class="audio-progress"></div>
+            </div>
+            <div class="audio-time">
+              <span id="audioCurrentTime">0:00</span> / <span id="audioDuration">0:00</span>
+            </div>
+          </div>
           <span id="audioStatus" class="audio-status">No audio loaded. Please select or upload a track.</span>
         </div>
         <audio id="audio" style="display:none;"></audio>
