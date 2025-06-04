@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BEALE Lite</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/beale-prototype/assets/index-CenBCKew.js"></script>
-  <link rel="stylesheet" crossorigin href="/beale-prototype/assets/index-RyW6PHfC.css">
+  <script type="module" crossorigin src="/beale-prototype/assets/index-BZm2otTi.js"></script>
+  <link rel="stylesheet" crossorigin href="/beale-prototype/assets/index-BJ1NEJ9u.css">
 </head>
 <body>
   <div class="container">
@@ -26,6 +26,14 @@
             <span id="playIcon">▶️</span>
             <span id="pauseIcon" style="display:none;">⏸️</span>
           </button>
+          <div class="audio-progress-container">
+            <div id="audioProgressBar" class="audio-progress-bar">
+              <div id="audioProgress" class="audio-progress"></div>
+            </div>
+            <div class="audio-time">
+              <span id="audioCurrentTime">0:00</span> / <span id="audioDuration">0:00</span>
+            </div>
+          </div>
           <span id="audioStatus" class="audio-status">No audio loaded. Please select or upload a track.</span>
         </div>
         <audio id="audio" style="display:none;"></audio>
