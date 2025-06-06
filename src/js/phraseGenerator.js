@@ -3,6 +3,9 @@ import locationsData from '../data/locations.json';
 import actionsData from '../data/actions.json';
 import emotionsData from '../data/emotions.json';
 import eventsData from '../data/events.json';
+import patternsData from '../data/patterns.json';
+import segmentsData from '../data/segments.json';
+import signalFlagsData from '../data/signal_flags.json';
 
 export class PhraseGenerator {
   constructor() {
@@ -11,6 +14,9 @@ export class PhraseGenerator {
     this.actions = actionsData.actions;
     this.emotions = emotionsData.emotions;
     this.events = eventsData.events;
+    this.patterns = patternsData.patterns;
+    this.segments = segmentsData.segments;
+    this.signalFlags = signalFlagsData.signal_flags;
 
     this.templates = [
       // Classic
@@ -31,12 +37,28 @@ export class PhraseGenerator {
       "{name}, {emotion}",
       "{name} and {name2}, {action}, {emotion}"
     ];
+
+    this.analystTemplates = [
+      // Pattern-centric
+      "Segment {segment}: {pattern} detected",
+      "{pattern} in {segment}, {signal_flag}",
+      "{segment} analysis: {pattern} with {signal_flag}",
+      // Signal-centric
+      "{signal_flag} during {pattern}",
+      "{segment} shows {pattern}, {signal_flag}",
+      // Technical
+      "{pattern} → {segment} → {signal_flag}",
+      "{segment} {pattern} {signal_flag}",
+      // Minimalist
+      "{pattern}",
+      "{segment}",
+      "{signal_flag}"
+    ];
   }
 
-  pick(arr, exclude = []) {
-    // Pick a random element not in exclude
-    const filtered = arr.filter(x => !exclude.includes(x));
-    return filtered[Math.floor(Math.random() * filtered.length)];
+  pick(array, exclude = []) {
+    const available = array.filter(item => !exclude.includes(item));
+    return available[Math.floor(Math.random() * available.length)];
   }
 
   getToneTag(frequency) {
@@ -63,6 +85,13 @@ export class PhraseGenerator {
   }
 
   generatePhrase(frequency, volume, time, mode = 'emotionalist') {
+    if (mode === 'analyst') {
+      return this.generateAnalystPhrase(frequency, volume, time);
+    }
+    return this.generateEmotionalistPhrase(frequency, volume, time);
+  }
+
+  generateEmotionalistPhrase(frequency, volume, time) {
     // Pick a template
     const template = this.pick(this.templates);
     // Pick elements, ensuring no duplicates where needed
@@ -86,7 +115,27 @@ export class PhraseGenerator {
     // Replace placeholders in the template
     let phrase = template.replace(/\{(\w+)\}/g, (_, key) => values[key] || '');
 
-    // Optionally, add time or mode tags
+    // Add time tag
+    phrase += ` [${Math.round(time)}s]`;
+    return phrase;
+  }
+
+  generateAnalystPhrase(frequency, volume, time) {
+    // Pick a template
+    const template = this.pick(this.analystTemplates);
+    
+    // Pick elements
+    const pattern = this.pick(this.patterns);
+    const segment = this.pick(this.segments);
+    const signalFlag = this.pick(this.signalFlags);
+
+    // Replace placeholders in the template
+    let phrase = template
+      .replace('{pattern}', pattern)
+      .replace('{segment}', segment)
+      .replace('{signal_flag}', signalFlag);
+
+    // Add time tag
     phrase += ` [${Math.round(time)}s]`;
     return phrase;
   }

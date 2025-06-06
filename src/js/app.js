@@ -216,6 +216,36 @@ class BEALELite {
     this.currentMode = mode;
     this.emotionalistMode.classList.toggle('active', mode === 'emotionalist');
     this.analystMode.classList.toggle('active', mode === 'analyst');
+    
+    // Update UI elements based on mode
+    if (mode === 'analyst') {
+      this.phraseOutput.classList.add('analyst-mode');
+      this.phraseOutput.classList.remove('emotionalist-mode');
+      if (this.hazyModeNote) {
+        this.hazyModeNote.textContent = 'Analyst Mode: Technical interpretation of audio patterns and signals';
+      }
+    } else {
+      this.phraseOutput.classList.add('emotionalist-mode');
+      this.phraseOutput.classList.remove('analyst-mode');
+      if (this.hazyModeNote) {
+        this.hazyModeNote.textContent = 'Emotionalist Mode: Poetic interpretation of whale song';
+      }
+    }
+    
+    // Generate a new phrase in the current mode if audio is playing
+    if (this.audioProcessor.isPlaying) {
+      const audioData = this.audioProcessor.getAudioData();
+      if (audioData) {
+        const phrase = this.phraseGenerator.generatePhrase(
+          audioData.peakFrequency,
+          audioData.averageVolume,
+          this.audio.currentTime,
+          mode
+        );
+        this.phraseOutput.textContent = phrase;
+        this.logManager.addPhrase(`[Mode Switch] ${phrase}`);
+      }
+    }
   }
 
   update() {

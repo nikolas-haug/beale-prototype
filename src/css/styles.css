@@ -160,16 +160,37 @@ input[type="file"] {
 
 .mode-selector {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .mode-selector button {
-  flex: 1;
+  padding: 8px 16px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mode-selector button:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .mode-selector button.active {
-  background-color: #357abd;
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+#emotionalistMode.active {
+  color: #2eccb9;
+  border-color: #2eccb9;
+}
+
+#analystMode.active {
+  color: #4a9eff;
+  border-color: #4a9eff;
 }
 
 .export-controls {
@@ -430,4 +451,21 @@ input[type="file"] {
   margin-top: 0.5em;
   border-radius: 4px;
   transition: opacity 0.2s;
+}
+
+/* Mode-specific styles */
+.analyst-mode {
+  font-family: 'Courier New', monospace;
+  color: #4a9eff;
+  background-color: rgba(74, 158, 255, 0.1);
+  border-left: 3px solid #4a9eff;
+  padding-left: 10px;
+}
+
+.emotionalist-mode {
+  font-family: 'Inter', sans-serif;
+  color: #2eccb9;
+  background-color: rgba(46, 204, 185, 0.1);
+  border-left: 3px solid #2eccb9;
+  padding-left: 10px;
 }
