@@ -419,3 +419,15 @@ input[type="file"] {
 .custom-audio-interface.audio-loaded .audio-status {
   display: none;
 }
+
+.hazy-mode-note {
+  color: #b0c4d4;
+  background: rgba(30, 40, 50, 0.7);
+  font-size: 0.78em;
+  font-style: normal;
+  border-left: 3px solid #4a90e2;
+  padding: 0.5em 1em;
+  margin-top: 0.5em;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+}

@@ -29,6 +29,11 @@ class BEALELite {
     this.audioCurrentTime = document.getElementById('audioCurrentTime');
     this.audioDuration = document.getElementById('audioDuration');
     this.customAudioInterface = document.querySelector('.custom-audio-interface');
+    this.hazyModeNote = document.getElementById('hazyModeNote');
+    this.unitIndex = 0;
+    this.lastUnitTime = 0;
+    this.nextPhraseTime = 0;
+    this.wasHazyMode = false;
 
     console.log('DOM elements initialized:', {
       audioFile: !!this.audioFile,
@@ -143,6 +148,9 @@ class BEALELite {
       // Analyze the file before playing
       const analysis = await this.audioProcessor.analyzeAudioFile(file);
       this.analyzedUnits = analysis.units;
+      this.unitIndex = 0;
+      this.lastUnitTime = 0;
+      this.nextPhraseTime = 0;
       
       // Remove loading state
       this.phraseOutput.classList.remove('loading-text');
@@ -219,17 +227,62 @@ class BEALELite {
     if (!audioData) return;
 
     const currentTime = this.audio.currentTime;
-    if (currentTime - this.lastLoggedTime >= this.logInterval) {
-      const phrase = this.phraseGenerator.generatePhrase(
-        audioData.peakFrequency,
-        audioData.averageVolume,
-        currentTime,
-        this.currentMode
-      );
+    const units = this.analyzedUnits && this.analyzedUnits.length > 0 ? this.analyzedUnits : null;
 
-      this.phraseOutput.textContent = phrase;
-      this.logManager.addPhrase(phrase);
-      this.lastLoggedTime = currentTime;
+    if (units) {
+      // If we just switched from hazy mode, show a note
+      if (this.wasHazyMode && this.hazyModeNote) {
+        this.hazyModeNote.textContent = 'Units detected: Interpretation is now synchronized to song structure.';
+        this.hazyModeNote.style.display = '';
+        setTimeout(() => {
+          if (this.hazyModeNote.textContent.startsWith('Units detected')) {
+            this.hazyModeNote.style.display = 'none';
+          }
+        }, 3500);
+      } else if (this.hazyModeNote && !this.hazyModeNote.textContent.startsWith('Units detected')) {
+        this.hazyModeNote.style.display = 'none';
+      }
+      this.wasHazyMode = false;
+      // Sync phrase display to unit start times
+      if (this.unitIndex < units.length && currentTime >= units[this.unitIndex].startTime) {
+        const phrase = this.phraseGenerator.generatePhrase(
+          audioData.peakFrequency,
+          audioData.averageVolume,
+          currentTime,
+          this.currentMode
+        );
+        this.phraseOutput.textContent = phrase;
+        this.logManager.addPhrase(phrase);
+        this.lastUnitTime = currentTime;
+        this.unitIndex++;
+      }
+      // Reset unit index if audio is restarted
+      if (currentTime < this.lastUnitTime) {
+        this.unitIndex = 0;
+      }
+    } else {
+      // Hazy mode: show note and use dynamic interval
+      if (this.hazyModeNote) {
+        this.hazyModeNote.textContent = 'Hazy Mode: No clear units detected—interpretation is experimental';
+        this.hazyModeNote.style.display = '';
+      }
+      this.wasHazyMode = true;
+      // Dynamic interval based on volume (louder = faster)
+      const minInterval = 2;
+      const maxInterval = 6;
+      const volume = audioData.averageVolume || 0;
+      const dynamicInterval = maxInterval - ((volume / 255) * (maxInterval - minInterval));
+      if (currentTime >= this.nextPhraseTime) {
+        const phrase = this.phraseGenerator.generatePhrase(
+          audioData.peakFrequency,
+          audioData.averageVolume,
+          currentTime,
+          this.currentMode
+        );
+        this.phraseOutput.textContent = phrase;
+        this.logManager.addPhrase(phrase);
+        this.nextPhraseTime = currentTime + dynamicInterval;
+      }
     }
   }
 
@@ -472,6 +525,9 @@ class BEALELite {
       const blob = await response.blob();
       const file = new File([blob], libraryFile.filename, { type: blob.type });
       await this.handleFileSelect({ target: { files: [file] } });
+      this.unitIndex = 0;
+      this.lastUnitTime = 0;
+      this.nextPhraseTime = 0;
     } catch (error) {
       this.phraseOutput.textContent = 'Error analyzing audio file';
       console.error('Error analyzing library audio:', error);
